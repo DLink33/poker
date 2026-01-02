@@ -1,4 +1,4 @@
-from poker import Deck, Hand
+from src.poker import Deck
 
 
 def main():
