@@ -13,7 +13,7 @@ class CardCollection():
         self._index:dict[tuple[SUITS, RANKS], list[Card]] = defaultdict(list)   # fast look up
         if cards:
             for card in cards:
-                self.add(card)
+                self.add_card(card)
 
     def __len__(self) -> int:
         return len(self._cards)
@@ -24,7 +24,7 @@ class CardCollection():
     def __str__(self) -> str:
         return "\n".join(str(card) for card in self._cards)
     
-    def add(self, card: Card, position: int | None = None) -> None:
+    def add_card(self, card: Card, position: int | None = None) -> None:
         """
         Adds a SINGLE card to the collection.
         If position is None, append at the end.
