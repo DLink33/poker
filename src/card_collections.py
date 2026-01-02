@@ -79,9 +79,18 @@ class CardCollection():
         return card
 
 class Deck(CardCollection):
-    '''
-    Docstring for Deck
-    '''
+    """
+    A standard 52-card deck of playing cards.
+    This class represents a complete deck containing all combinations of suits and ranks.
+    It provides stack-style operations (LIFO) and queue-style operations (FIFO) for
+    drawing cards, as well as shuffling capabilities.
+    Inherits from:
+        CardCollection: Base class for managing collections of Card objects.
+    Attributes:
+        Inherited from CardCollection:
+            _cards (list[Card]): The internal list of Card objects in the deck.
+            _index (dict): Index mapping card types to their instances for fast lookup.
+    """
     def __init__(self):
         cards:list[Card] = [
             Card(suit, rank)
@@ -92,13 +101,12 @@ class Deck(CardCollection):
 
     
     # ---- deck/stack-style helpers ----
-
-    def draw_top(self) -> Card | None:
-        """Pop from the end (top) of the collection."""
+    
+    def _draw(self, top=True) -> Card | None:
         if not self._cards:
             return None
-
-        card = self._cards.pop()
+        
+        card:Card | None = self._cards.pop() if top else self._cards.pop(0)
 
         if card is None:
             return None
@@ -107,23 +115,21 @@ class Deck(CardCollection):
         bucket.remove(card)
         if not bucket:
             del self._index[(card.type.suit, card.type.rank)]
-
+        
         return card
+
+        
+    def draw_top(self) -> Card | None:
+        """
+        Pop from the end (top) of the collection.
+        """
+        self._draw(top=True)
 
     def draw_bottom(self) -> Card | None:
-        """Pop from the beginning (bottom) of the collection."""
-        if not self._cards:
-            return None
-
-        card = self._cards.pop(0)
-        if card is None:
-            return None
-        bucket = self._index[(card.type.suit, card.type.rank)]
-        bucket.remove(card)
-        if not bucket:
-            del self._index[(card.type.suit, card.type.rank)]
-
-        return card
+        """
+        Pop from the beginning (bottom) of the collection.
+        """
+        self._draw(top=False)
     
     def shuffle(self) -> None:
         shuffle(self._cards)
