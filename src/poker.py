@@ -1,83 +1,174 @@
-SUITS = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
-RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King', 'Ace']
+from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum, IntEnum
 
+
+class SUITS(Enum):
+    clubs       = "♣"
+    diamonds    = "♦"
+    hearts      = "♥"
+    spades      = "♠"
+
+class RANKS(IntEnum):
+    two         = 2
+    three       = 3
+    four        = 4
+    five        = 5
+    six         = 6
+    seven       = 7
+    eight       = 8
+    nine        = 9
+    ten         = 10
+    jack        = 11
+    queen       = 12
+    king        = 13
+    ace         = 14
+
+
+@dataclass(frozen=True)
+class CardType:
+    suit:SUITS
+    rank:RANKS
 
 class Card():
-    def __init__(self, suit, rank):
-        self.suit = suit
-        self.rank = rank
-        self.revealed = False
+
+    _nxt_id = 0
+    @classmethod
+    def _get_id(cls):
+        cid = cls._nxt_id
+        cls._nxt_id += 1
+        return cid
+    
+    def __init__(self, suit:SUITS, rank:RANKS):
+        self.id:int = self._get_id()
+        self.type:CardType = CardType(suit, rank)
+        self.revealed:bool = False
     
     def __str__(self) -> str:
-        return f"{self.rank} of {self.suit}"
+        return f"{self.type.rank.value} of {self.type.suit.value}"
     
-class CardSet():
+class CardCollection():
     '''
-    Represents a set of cards (unique and unordered)
+    Represents a set of cards (ordered with index-type lookups)
     '''
-    def __init__(self, cards:set[Card | None]):
-        self.cards:set[Card|None] = cards
+    def __init__(self, cards:list[Card] | None = None):
+        self._cards:list[Card|None] = []                                        # represents order
+        self._index:dict[tuple[SUITS, RANKS], list[Card]] = defaultdict(list)   # fast look up
     
+    def __len__(self) -> int:
+        return len(self._cards)
+
+    def __iter__(self):
+        return iter(self._cards)
+
     def __str__(self) -> str:
-        "Prints out alist of cards currently in the Deck"
-        out: str = ""
-        for card in self.cards:
-            out += str(card) + "\n"
-        return out
+        return "\n".join(str(c) for c in self._cards)
     
-    def take(self, numCards:int=1) -> None|Card|set[Card]:
-        if not numCards:
-            return
-        if numCards == 1:
-            return self.cards.pop()
-        drawn = set()
-        for i in range(numCards):
-            drawn.add(self.cards.pop())
-        return drawn
-    
-    def insert(self, cards:set[Card], numCards:int) -> None:
-        if not cards:
-            return
-        for card in cards:
-            self.cards.add(card)
-    
-class Pile():
-    def __init__(self, cards:list[Card]):
-        self.cards = cards
-    def draw(self, numCards:int=1)-> Card|set[Card]:
-        if numCards == 1:
-            return self.cards.pop()
-        retCards:set[Card] = set()
-        for _ in range(numCards):
-            retCards.add(self.cards.pop())
-        return retCards
+    def add(self, card: Card, position: int | None = None) -> None:
+        """
+        Adds a SINGLE card to the collection.
+        If position is None, append at the end.
+        """
+        if position is None:
+            self._cards.append(card)
+        else:
+            self._cards.insert(position, card)
+        
+        # can track more than one card of the same rank and suit with a list:
+        self._index[(card.type.suit, card.type.rank)].append(card) 
 
+    def remove_card(self, card: Card) -> None:
+        """
+        Removes this exact card object from the collection.
+        """
+        self._cards.remove(card)
+        bucket = self._index[(card.type.suit, card.type.rank)]
+        bucket.remove(card)
+        if not bucket: # if there are no more cards of this type in the collection, delete dict entry
+            del self._index[(card.type.suit, card.type.rank)]
 
-class Deck(Pile):
-    """A class representing a standard deck of 52 playing cards."""
+    # ---- lookup by type ----
 
+    def has_card_of_type(self, suit: SUITS, rank: RANKS) -> bool:
+        """
+        Do we have at least one card with this suit/rank?
+        """
+        return bool(self._index.get((suit, rank)))
 
+    def peek_card_of_type(self, suit: SUITS, rank: RANKS) -> Card | None:
+        """
+        Return (without removing) one card of this type, if any.
+        """
+        bucket = self._index.get((suit, rank))
+        return bucket[0] if bucket else None
+
+    def pop_card_of_type(self, suit: SUITS, rank: RANKS) -> Card | None:
+        """
+        Remove and return one card with this suit/rank.
+        If multiple exist, arbitrarily returns one of them.
+        """
+        bucket = self._index.get((suit, rank))
+        if not bucket:
+            return None
+
+        card = bucket.pop()          # pick one
+        if not bucket:
+            del self._index[(suit, rank)]
+
+        self._cards.remove(card)
+        return card
+
+class Deck(CardCollection):
+    '''
+    Docstring for Deck
+    '''
     def __init__(self):
-        """Initialize the deck with 52 cards."""
-        super().__init__([Card(suit, rank) for suit in SUITS for rank in RANKS])
+        cards:list[Card] = [
+            Card(suit, rank)
+            for suit in SUITS
+            for rank in RANKS
+        ]
+        super().__init__(cards)
     
+    # ---- deck/stack-style helpers ----
 
-    def shuffle(self) -> None:
-        """Shuffle the deck of cards."""
-        import random
-        if not self.cards:
-            return
-        cards_list = list(self.cards)
-        random.shuffle(cards_list)
-        self.cards = set(cards_list)
+    def draw_top(self) -> Card | None:
+        """Pop from the end (top) of the collection."""
+        if not self._cards:
+            return None
+
+        card = self._cards.pop()
+
+        if card is None:
+            return None
+        
+        bucket = self._index[(card.type.suit, card.type.rank)]
+        bucket.remove(card)
+        if not bucket:
+            del self._index[(card.type.suit, card.type.rank)]
+
+        return card
+
+    def draw_bottom(self) -> Card | None:
+        """Pop from the beginning (bottom) of the collection."""
+        if not self._cards:
+            return None
+
+        card = self._cards.pop(0)
+        if card is None:
+            return None
+        bucket = self._index[(card.type.suit, card.type.rank)]
+        bucket.remove(card)
+        if not bucket:
+            del self._index[(card.type.suit, card.type.rank)]
+
+        return card
 
 class Entity:
     def __init__(self, name:str):
         self.name:str = name
 
 class Dealer(Entity):
-    def __init__(self, deck:Deck):
-        self.deck:Deck = deck
-
-
+    def __init__(self, deck:CardCollection):
+        self.deck:CardCollection = deck
 

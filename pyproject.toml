@@ -13,4 +13,4 @@ authors = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "black", "flake8", "ordered-set"]
+dev = ["pytest>=7.0", "black", "flake8"]
