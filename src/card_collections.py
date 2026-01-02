@@ -1,52 +1,9 @@
 from collections import defaultdict
-from dataclasses import dataclass
-from enum import Enum, IntEnum
+from random import shuffle
+
+from .cards import RANKS, SUITS, Card
 
 
-class SUITS(Enum):
-    clubs       = "♣"
-    diamonds    = "♦"
-    hearts      = "♥"
-    spades      = "♠"
-
-class RANKS(IntEnum):
-    two         = 2
-    three       = 3
-    four        = 4
-    five        = 5
-    six         = 6
-    seven       = 7
-    eight       = 8
-    nine        = 9
-    ten         = 10
-    jack        = 11
-    queen       = 12
-    king        = 13
-    ace         = 14
-
-
-@dataclass(frozen=True)
-class CardType:
-    suit:SUITS
-    rank:RANKS
-
-class Card():
-
-    _nxt_id = 0
-    @classmethod
-    def _get_id(cls):
-        cid = cls._nxt_id
-        cls._nxt_id += 1
-        return cid
-    
-    def __init__(self, suit:SUITS, rank:RANKS):
-        self.id:int = self._get_id()
-        self.type:CardType = CardType(suit, rank)
-        self.revealed:bool = False
-    
-    def __str__(self) -> str:
-        return f"{self.type.rank.value} of {self.type.suit.value}"
-    
 class CardCollection():
     '''
     Represents a set of cards (ordered with index-type lookups)
@@ -54,7 +11,10 @@ class CardCollection():
     def __init__(self, cards:list[Card] | None = None):
         self._cards:list[Card|None] = []                                        # represents order
         self._index:dict[tuple[SUITS, RANKS], list[Card]] = defaultdict(list)   # fast look up
-    
+        if cards:
+            for card in cards:
+                self.add(card)
+
     def __len__(self) -> int:
         return len(self._cards)
 
@@ -62,7 +22,7 @@ class CardCollection():
         return iter(self._cards)
 
     def __str__(self) -> str:
-        return "\n".join(str(c) for c in self._cards)
+        return "\n".join(str(card) for card in self._cards)
     
     def add(self, card: Card, position: int | None = None) -> None:
         """
@@ -129,6 +89,7 @@ class Deck(CardCollection):
             for rank in RANKS
         ]
         super().__init__(cards)
+
     
     # ---- deck/stack-style helpers ----
 
@@ -163,12 +124,21 @@ class Deck(CardCollection):
             del self._index[(card.type.suit, card.type.rank)]
 
         return card
+    
+    def shuffle(self) -> None:
+        shuffle(self._cards)
 
-class Entity:
-    def __init__(self, name:str):
-        self.name:str = name
+class Hand(CardCollection):
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError
 
-class Dealer(Entity):
-    def __init__(self, deck:CardCollection):
-        self.deck:CardCollection = deck
+class Pile(CardCollection):
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError
 
+class DiscardPile(Pile):
+    def __init__(self):
+        super().__init__()
+        raise NotImplementedError
