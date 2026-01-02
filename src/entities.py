@@ -1,4 +1,4 @@
-from card_collections import CardCollection
+from card_collections import Deck, Hand
 
 
 class Entity:
@@ -6,11 +6,11 @@ class Entity:
         self.name:str = name
 
 class Dealer(Entity):
-    def __init__(self, deck:CardCollection):
-        self.deck:CardCollection = deck
+    def __init__(self):
+        self.deck:Deck = Deck()
         super().__init__(name='dealer')
 
 class Player(Entity):
-    def __init__(self, name):
+    def __init__(self, name, hand:Hand):
         super().__init__(name)
-        self.hand:CardCollection = CardCollection(cards=[])
+        self.hand:Hand = hand
