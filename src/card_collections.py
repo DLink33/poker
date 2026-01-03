@@ -137,7 +137,7 @@ class Deck(CardCollection):
 class Hand(CardCollection):
     def __init__(self):
         super().__init__()
-        raise NotImplementedError
+
 
 class Pile(CardCollection):
     def __init__(self):
