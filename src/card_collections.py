@@ -9,7 +9,7 @@ class CardCollection():
     Represents a set of cards (ordered with index-type lookups)
     '''
     def __init__(self, cards:list[Card] | None = None):
-        self._cards:list[Card|None] = []                                        # represents order
+        self._cards:list[Card] = []  # represents order
         self._index:dict[tuple[SUITS, RANKS], list[Card]] = defaultdict(list)   # fast look up
         if cards:
             for card in cards:
@@ -135,8 +135,17 @@ class Deck(CardCollection):
         shuffle(self._cards)
 
 class Hand(CardCollection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, cards:list[Card]):
+        super().__init__(cards=cards)
+        
+    def getCards(self):
+        return self._cards
+    
+    def getMinCard(self):
+        return min(self.getCards())
+    
+    def getMaxCard(self):
+        return min(self.getCards())
 
 
 class Pile(CardCollection):
@@ -148,3 +157,10 @@ class DiscardPile(Pile):
     def __init__(self):
         super().__init__()
         raise NotImplementedError
+
+# Main for smoke testing purposes   
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()

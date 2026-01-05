@@ -10,7 +10,7 @@ def main():
     if card:
         game.players[0].hand.add_card(card)
     print("Player hand:")
-    game.poker()
+    game.rules.poker(game.players)
 
 if __name__ == '__main__':
     main()

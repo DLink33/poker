@@ -45,3 +45,18 @@ class Card():
     
     def __str__(self) -> str:
         return f"{self.type.rank.name} of {self.type.suit.value}"
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return NotImplemented
+        return self.type.rank == other.type.rank
+    
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return NotImplemented
+        return self.type.rank < other.type.rank
+    
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, Card):
+            return NotImplemented
+        return self.type.rank > other.type.rank
