@@ -72,9 +72,23 @@ def main():
     straight:Hand = Hand(cards)
     flush:Hand = Hand(cards)
 
+    print(straight)
+    print("\n" +str(flush))
+
     rules:Logic = Logic()
+
     assert rules.is_flush(flush)
     assert rules.is_straight(straight)
+
+    straight._cards[4] = Card(suit=SUITS.diamonds, rank=RANKS.six)
+    flush._cards[4] = Card(suit=SUITS.spades, rank=RANKS.five)
+    assert not rules.is_straight(straight)
+    assert not rules.is_flush(flush)
+    
+    print("\n" + str(straight))
+    print("\n" +str(flush))
+
+
 
 if __name__ == '__main__':
     main()
