@@ -59,6 +59,19 @@ class Logic():
             return True
         
         return False
+    
+    @staticmethod
+    def is_royal_flush(hand:Hand):
+        cards:list[Card] = hand.getCards()
+        if not cards:
+            return False
+        
+        ranks:list[RANKS] = sorted(set(card.type.rank for card in cards))
+        if len(ranks) != 5:
+            return False
+        if ranks == [10,11,12,13,14]:
+            return True
+        return False
 
 # main function for smoke testing
 def main():
