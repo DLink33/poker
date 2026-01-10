@@ -1,2 +1,23 @@
-__pycache__/
+# virtual environments
 .venv/
+venv/
+env/
+
+# python bytecode
+__pycache__/
+*.py[cod]
+
+# packaging/build artifacts
+*.egg-info/
+build/
+dist/
+
+# pytest / tooling
+.pytest_cache/
+.coverage
+htmlcov/
+
+# editors/OS
+.vscode/
+.idea/
+.DS_Store
