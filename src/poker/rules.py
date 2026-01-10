@@ -1,23 +1,9 @@
 from collections import Counter
 
-from .card_collections import Deck, Hand
+from .card_collections import Hand
 from .cards import RANKS, SUITS, Card
-from .entities import Dealer, Player
+from .entities import Player
 
-
-class Game():
-    _player_id = 0
-    def __init__(self, numPlayers):
-        self.rules = Logic()
-        self.numPlayers = numPlayers
-        self.players:list[Player] = []
-        self.dealer = Dealer()
-        self.deck = Deck()
-        self.init_players()
-
-    def init_players(self) -> None:
-        for i in range(self.numPlayers):
-            self.players.append(Player(str(i), Hand([])))
 
 class Logic():
     @staticmethod
@@ -70,7 +56,10 @@ class Logic():
         
         ### Straight Flush ###
         if cls.is_flush(hand) and cls.is_straight(hand):
-            hand_rank = [9] 
+            hand_rank = [9]
+            # check for ace hi/lo
+            ranks:list[int] = sorted(set(card.type.rank.value for card in cards))
+            return ranks
             hand_rank.append(cards[0].type.rank.value)
         ### Four of a Kind ###
         # if cls.is_four_of_kind(hand):
@@ -88,29 +77,3 @@ class Logic():
         #hand:Hand = player.hand
 
         raise NotImplementedError
-    
-   
-
-# main function for smoke testing
-def main():
-    cards:list[Card] = [
-        Card(suit=SUITS.diamonds, rank=RANKS.jack),
-        Card(suit=SUITS.diamonds, rank=RANKS.ten),
-        Card(suit=SUITS.diamonds, rank=RANKS.nine),
-        Card(suit=SUITS.diamonds, rank=RANKS.eight),
-        Card(suit=SUITS.diamonds, rank=RANKS.seven) 
-    ]
-
-    test_hand:Hand = Hand(cards)
-    test_player:Player = Player("david", test_hand)
-    
-    rules:Logic = Logic()
-    
-    print(test_player.hand)
-
-    print(rules.calc_hand_rank(test_player))
-
-
-
-if __name__ == '__main__':
-    main()

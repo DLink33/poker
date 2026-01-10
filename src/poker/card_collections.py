@@ -1,7 +1,7 @@
 from collections import defaultdict
 from random import shuffle
 
-from .cards import RANKS, SUITS, Card
+from .cards import Card, Ranks, Suits
 
 
 class CardCollection():
@@ -10,7 +10,7 @@ class CardCollection():
     '''
     def __init__(self, cards:list[Card] | None = None):
         self._cards:list[Card] = []  # represents order
-        self._index:dict[tuple[SUITS, RANKS], list[Card]] = defaultdict(list)   # fast look up
+        self._index:dict[tuple[Suits, Ranks], list[Card]] = defaultdict(list)   # fast look up
         if cards:
             for card in cards:
                 self.add_card(card)
@@ -49,20 +49,20 @@ class CardCollection():
 
     # ---- lookup by type ----
 
-    def has_card_of_type(self, suit: SUITS, rank: RANKS) -> bool:
+    def has_card_of_type(self, suit: Suits, rank: Ranks) -> bool:
         """
         Do we have at least one card with this suit/rank?
         """
         return bool(self._index.get((suit, rank)))
 
-    def peek_card_of_type(self, suit: SUITS, rank: RANKS) -> Card | None:
+    def peek_card_of_type(self, suit: Suits, rank: Ranks) -> Card | None:
         """
         Return (without removing) one card of this type, if any.
         """
         bucket = self._index.get((suit, rank))
         return bucket[0] if bucket else None
 
-    def pop_card_of_type(self, suit: SUITS, rank: RANKS) -> Card | None:
+    def pop_card_of_type(self, suit: Suits, rank: Ranks) -> Card | None:
         """
         Remove and return one card with this suit/rank.
         If multiple exist, arbitrarily returns one of them.
@@ -94,8 +94,8 @@ class Deck(CardCollection):
     def __init__(self):
         cards:list[Card] = [
             Card(suit, rank)
-            for suit in SUITS
-            for rank in RANKS
+            for suit in Suits
+            for rank in Ranks
         ]
         super().__init__(cards)
 

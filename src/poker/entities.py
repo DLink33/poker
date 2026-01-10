@@ -1,5 +1,5 @@
 from .card_collections import Deck, Hand
-from .cards import RANKS, SUITS, Card
+from .cards import Card, Ranks, Suits
 
 
 class Entity:
@@ -19,9 +19,9 @@ class Player(Entity):
         self.hand:Hand = hand
     
 def main():
-    ace_of_diamonds:Card = Card(SUITS.diamonds, RANKS.ace)
-    jack_of_spades:Card = Card(SUITS.spades, RANKS.jack)
-    two_of_clubs:Card = Card(SUITS.clubs, RANKS.two)
+    ace_of_diamonds:Card = Card(Suits.DIAMONDS, Ranks.ACE)
+    jack_of_spades:Card = Card(Suits.SPADES, Ranks.JACK)
+    two_of_clubs:Card = Card(Suits.CLUBS, Ranks.TWO)
     smol_hand = [ace_of_diamonds, jack_of_spades, two_of_clubs]
     low_card = min(smol_hand)
     high_card = max(smol_hand)
