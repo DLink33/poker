@@ -1,3 +1,5 @@
+from collections import Counter
+
 from .card_collections import Deck, Hand
 from .cards import RANKS, SUITS, Card
 from .entities import Dealer, Player
@@ -18,21 +20,6 @@ class Game():
             self.players.append(Player(str(i), Hand([])))
 
 class Logic():
-    @classmethod
-    def poker(cls, players) -> Player:
-        return max(players, key=cls.calc_hand_rank)
-    
-    @classmethod
-    def calc_hand_rank(cls, player):
-        #TODO: Calculate the rank of a given player's hand
-        # Need to determine the best way to represent the rank
-        # There are 9 types of hand ranks that can be scored from 0 to 9
-        # However there are also rules for ties within the same rank
-        # This is the part that is going to be tricky
-        #hand:Hand = player.hand
-
-        raise NotImplementedError
-    
     @staticmethod
     def is_flush(hand:Hand) -> bool:
         cards:list[Card] = hand.getCards()
@@ -59,47 +46,69 @@ class Logic():
             return True
         
         return False
-    
+
     @staticmethod
-    def is_royal_flush(hand:Hand):
-        cards:list[Card] = hand.getCards()
+    def is_four_of_kind(hand: Hand) -> bool:
+        cards: list[Card] = hand.getCards()
         if not cards:
             return False
+
+        counts = Counter(card.type.rank for card in cards)
+        return 4 in counts.values()
+
+    @classmethod
+    def poker(cls, players) -> Player:
+        return max(players, key=cls.calc_hand_rank)
+    
+    @classmethod
+    def calc_hand_rank(cls, player):
+        hand: Hand = player.hand
+        if (len(player.hand) < 5):
+            return (0,0,0)
+        hand_rank:list[int] = []
+        cards:list[Card] = sorted(hand.getCards(),reverse=True)
         
-        ranks:list[RANKS] = sorted(set(card.type.rank for card in cards))
-        if len(ranks) != 5:
-            return False
-        if ranks == [10,11,12,13,14]:
-            return True
-        return False
+        ### Straight Flush ###
+        if cls.is_flush(hand) and cls.is_straight(hand):
+            hand_rank = [9] 
+            hand_rank.append(cards[0].type.rank.value)
+        ### Four of a Kind ###
+        # if cls.is_four_of_kind(hand):
+        #     hand_rank = 
+
+        return hand_rank
+            
+        
+
+        #TODO: Calculate the rank of a given player's hand
+        # Need to determine the best way to represent the rank
+        # There are 9 types of hand ranks that can be scored from 0 to 9
+        # However there are also rules for ties within the same rank
+        # This is the part that is going to be tricky
+        #hand:Hand = player.hand
+
+        raise NotImplementedError
+    
+   
 
 # main function for smoke testing
 def main():
-    ace_d = Card(suit=SUITS.diamonds, rank=RANKS.ace)
-    two_d = Card(suit=SUITS.diamonds, rank=RANKS.two)
-    three_d = Card(suit=SUITS.diamonds, rank=RANKS.three)
-    four_d = Card(suit=SUITS.diamonds, rank=RANKS.four)
-    five_d = Card(suit=SUITS.diamonds, rank=RANKS.five)
-    cards:list[Card] = [ace_d, two_d, three_d, four_d, five_d]
+    cards:list[Card] = [
+        Card(suit=SUITS.diamonds, rank=RANKS.jack),
+        Card(suit=SUITS.diamonds, rank=RANKS.ten),
+        Card(suit=SUITS.diamonds, rank=RANKS.nine),
+        Card(suit=SUITS.diamonds, rank=RANKS.eight),
+        Card(suit=SUITS.diamonds, rank=RANKS.seven) 
+    ]
 
-    straight:Hand = Hand(cards)
-    flush:Hand = Hand(cards)
-
-    print(straight)
-    print("\n" +str(flush))
-
-    rules:Logic = Logic()
-
-    assert rules.is_flush(flush)
-    assert rules.is_straight(straight)
-
-    straight._cards[4] = Card(suit=SUITS.diamonds, rank=RANKS.six)
-    flush._cards[4] = Card(suit=SUITS.spades, rank=RANKS.five)
-    assert not rules.is_straight(straight)
-    assert not rules.is_flush(flush)
+    test_hand:Hand = Hand(cards)
+    test_player:Player = Player("david", test_hand)
     
-    print("\n" + str(straight))
-    print("\n" +str(flush))
+    rules:Logic = Logic()
+    
+    print(test_player.hand)
+
+    print(rules.calc_hand_rank(test_player))
 
 
 
