@@ -1,7 +1,7 @@
 from collections import Counter
 
 from .card_collections import Hand
-from .cards import RANKS, SUITS, Card
+from .cards import Card, Ranks, Suits
 from .entities import Player
 
 
@@ -11,7 +11,7 @@ class Logic():
         cards:list[Card] = hand.getCards()
         if cards == []:
             return False
-        first_suit:SUITS = cards[0].type.suit
+        first_suit:Suits = cards[0].type.suit
         return all(card.type.suit == first_suit for card in cards)
     
     @staticmethod
@@ -20,7 +20,7 @@ class Logic():
         if not cards:
             return False
         
-        ranks:list[RANKS] = sorted(set(card.type.rank for card in cards))
+        ranks:list[Ranks] = sorted(set(card.type.rank for card in cards))
         
         if len(ranks) != 5:
             return False

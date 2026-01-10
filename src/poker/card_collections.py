@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict
 from random import shuffle
+from typing import Self
 
 from .cards import Card, Ranks, Suits
 
@@ -10,7 +11,7 @@ class CardCollection():
     Represents a set of cards (ordered with index-type lookups)
     '''
     @classmethod
-    def from_str(cls, cards_str:str) -> "CardCollection":
+    def from_str(cls, cards_str:str) -> Self:
         card_list: list[Card] = []
         cards: list[str] = re.split(r'[;,\s]+', cards_str)
         for card_str in cards:
@@ -18,7 +19,7 @@ class CardCollection():
         return cls(card_list)
     
     @classmethod
-    def from_str_list(cls, cards:list[str]) -> "CardCollection":
+    def from_str_list(cls, cards:list[str]) -> Self:
         card_list: list[Card] = []
         for card_str in cards:
             card_list.append(Card.from_str(card_str))
@@ -176,7 +177,7 @@ class DiscardPile(Pile):
 
 # Main for smoke testing purposes   
 def main():
-    hand = Hand.from_str('AD KD QD JD, TD 9D, 8D; 7D 6D; 5D 4D, 3D 2D')
+    hand:Hand = Hand.from_str('AD KD QD JD, TD 9D, 8D; 7D 6D; 5D 4D, 3D 2D')
     print(hand)
 
 if __name__ == '__main__':
