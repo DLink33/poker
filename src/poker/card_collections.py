@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from random import shuffle
 
@@ -8,6 +9,21 @@ class CardCollection():
     '''
     Represents a set of cards (ordered with index-type lookups)
     '''
+    @classmethod
+    def from_str(cls, cards_str:str) -> "CardCollection":
+        card_list: list[Card] = []
+        cards: list[str] = re.split(r'[;,\s]+', cards_str)
+        for card_str in cards:
+            card_list.append(Card.from_str(card_str))
+        return cls(card_list)
+    
+    @classmethod
+    def from_str_list(cls, cards:list[str]) -> "CardCollection":
+        card_list: list[Card] = []
+        for card_str in cards:
+            card_list.append(Card.from_str(card_str))
+        return cls(card_list)
+
     def __init__(self, cards:list[Card] | None = None):
         self._cards:list[Card] = []  # represents order
         self._index:dict[tuple[Suits, Ranks], list[Card]] = defaultdict(list)   # fast look up
@@ -160,7 +176,8 @@ class DiscardPile(Pile):
 
 # Main for smoke testing purposes   
 def main():
-    pass
+    hand = Hand.from_str('AD KD QD JD, TD 9D, 8D; 7D 6D; 5D 4D, 3D 2D')
+    print(hand)
 
 if __name__ == '__main__':
     main()
