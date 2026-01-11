@@ -136,64 +136,25 @@ def test_hand_distribution_matches_5card_theory() -> None:
         raise
 
 
-def test_hand_rank_straight_flush() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_straight_flush())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 8  # straight flush
+@pytest.mark.parametrize(
+    "hand_factory, expected_rank",
+    [
+        (TestUtils.gen_random_high_card, 0),
+        (TestUtils.gen_random_one_pair, 1),
+        (TestUtils.gen_random_two_pair, 2),
+        (TestUtils.gen_random_three_of_a_kind, 3),
+        (TestUtils.gen_random_straight, 4),
+        (TestUtils.gen_random_flush, 5),
+        (TestUtils.gen_random_full_house, 6),
+        (TestUtils.gen_random_four_of_a_kind, 7),
+        (TestUtils.gen_random_straight_flush, 8),
+    ],
+    ids=[HAND_RANKINGS[i] for i in range(9)],
+)
+def test_calc_hand_rank_by_category(hand_factory, expected_rank: int) -> None:
+    cards: list[str] = hand_factory()
+    hand: Hand = TestUtils.make_hand(cards)
+    player: Player = Player("Tester", hand=hand)
 
-
-def test_hand_rank_four_of_a_kind() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_four_of_a_kind())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 7  # four of a kind
-
-
-def test_hand_rank_full_house() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_full_house())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 6  # full house
-
-
-def test_hand_rank_flush() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_flush())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 5  # flush
-
-
-def test_hand_rank_straight() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_straight())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 4  # straight
-
-
-def test_hand_rank_three_of_a_kind() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_three_of_a_kind())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 3  # three of a kind
-
-
-def test_hand_rank_two_pair() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_two_pair())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 2  # two pair
-
-
-def test_hand_rank_one_pair() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_one_pair())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 1  # one pair
-
-
-def test_hand_rank_high_card() -> None:
-    hand = TestUtils.make_hand(TestUtils.gen_random_high_card())
-    player = Player("Tester", hand=hand)
-    rank1 = Logic.calc_hand_rank(player)
-    assert rank1[0] == 0  # high card
+    rank: tuple[int, list[int]] = Logic.calc_hand_rank(player)
+    assert rank[0] == expected_rank
