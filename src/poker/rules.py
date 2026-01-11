@@ -20,14 +20,16 @@ class Logic:
         if not cards:
             return False
 
+        # is it a hand of 5 unique cards
         ranks: list[Ranks] = sorted(set(card.type.rank for card in cards))
-
         if len(ranks) != 5:
             return False
 
+        # is the hand sequential
         if ranks[4] - ranks[0] == 4:
             return True
 
+        # if it is not sequential, does the low-ace rule apply
         if ranks == [2, 3, 4, 5, 14]:
             return True
 
@@ -95,31 +97,139 @@ class Logic:
         return max(players, key=cls.calc_hand_rank)
 
     @classmethod
-    def calc_hand_rank(cls, player):
+    def calc_hand_rank(cls, player) -> tuple:
+        def order_by_rank_freq(ranks: list[int], lo2hi: bool = False):
+            rank_counts: Counter = Counter(ranks)
+            return sorted(
+                ranks,
+                key=lambda x: (-rank_counts[x], -x)
+                if not lo2hi
+                else (rank_counts[x], x),
+            )
+
+        # get the player's hand
         hand: Hand = player.hand
+
+        # Determine if the we even have a complete hand
         if len(player.hand) < 5:
             return (0, 0, 0)
-        hand_rank: list[int] = []
+
+        # get the player's cards and sort them
         cards: list[Card] = sorted(hand.getCards(), reverse=True)
+        # get the ranks of the sorted cards (order preserved)
+        ranks: list[int] = [card.type.rank.value for card in cards]
+        # it is useful to also have the ranks ordered by frequency (hence the helper)
+        ranks_by_freq: list[int] = order_by_rank_freq(ranks)
+        hand_rank: list
+
+        # DEBUG
+        # print(ranks)
+        # print(ranks_by_freq)
 
         ### Straight Flush ###
         if cls.is_flush(hand) and cls.is_straight(hand):
-            hand_rank = [9]
+            hand_rank = [8, ranks[0]]
             # check for ace hi/lo
-            ranks: list[int] = sorted(set(card.type.rank.value for card in cards))
-            return ranks
-            hand_rank.append(cards[0].type.rank.value)
-        ### Four of a Kind ###
-        # if cls.is_four_of_kind(hand):
-        #     hand_rank =
+            if ranks == [14, 5, 4, 3, 2]:
+                hand_rank[1] = 5
+            return tuple(hand_rank)
+        elif cls.is_four_of_kind(hand):
+            hand_rank = [7, ranks_by_freq[0], ranks_by_freq[-1]]
+            return tuple(hand_rank)
+        elif cls.is_full_house(hand):
+            hand_rank = [6, ranks_by_freq[0], ranks_by_freq[-1]]
+            return tuple(hand_rank)
+        elif cls.is_flush(hand):
+            hand_rank = [5, ranks]
+            return tuple(hand_rank)
+        elif cls.is_straight(hand):
+            hand_rank = [4, ranks[0]]
+            return tuple(hand_rank)
+        elif cls.is_three_of_kind(hand):
+            hand_rank = [3, ranks_by_freq[0], ranks_by_freq[3:]]
+            return tuple(hand_rank)
+        elif cls.is_two_pair(hand):
+            hand_rank = [2, ranks_by_freq[0], ranks_by_freq[2], ranks]
+            return tuple(hand_rank)
+        elif cls.is_one_pair(hand):
+            hand_rank = [1, ranks_by_freq[0], ranks]
+            return tuple(hand_rank)
+        else:
+            hand_rank = [0] + [rank for rank in ranks]
+            return tuple(hand_rank)
 
-        return hand_rank
 
-        # TODO: Calculate the rank of a given player's hand
-        # Need to determine the best way to represent the rank
-        # There are 9 types of hand ranks that can be scored from 0 to 9
-        # However there are also rules for ties within the same rank
-        # This is the part that is going to be tricky
-        # hand:Hand = player.hand
+# main for smoke testing
+def main():
+    rules: Logic = Logic()
 
-        raise NotImplementedError
+    # Straight Flush
+    hand: Hand = Hand.from_str("tc 9c 8c 7c 6c")
+    player: Player = Player("Test Name", hand)
+    print(player)
+    print(rules.calc_hand_rank(player))
+
+    # Four of a kind (smaller kicker)
+    hand: Hand = Hand.from_str("qd qs qc qh 7d")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Four of a Kind (larger kicker)
+    hand: Hand = Hand.from_str("7d 7s 7c 7h qd")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Four of a Kind
+    hand: Hand = Hand.from_str("as ah ad ac qh")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Full House
+    hand: Hand = Hand.from_str("8s 8h 8d ks kc")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Flush
+    hand: Hand = Hand.from_str("8d 7d 2d kd td")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Straight
+    hand: Hand = Hand.from_str("jc ts 9h 8d 7c")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Three of a Kind
+    hand: Hand = Hand.from_str("7d, 7h, 7s, 5c, 2h")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Two Pair
+    hand: Hand = Hand.from_str("9s 9h 3d 2h 2h")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # One pair
+    hand: Hand = Hand.from_str("2s 2h jh 6d 3s")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+    # Nada
+    # Two Pair
+    hand: Hand = Hand.from_str("7s 5h 4d 3c 2h")
+    player.hand = hand
+    print("\n" + str(hand))
+    print(rules.calc_hand_rank(player))
+
+
+if __name__ == "__main__":
+    main()

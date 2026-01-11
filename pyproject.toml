@@ -30,5 +30,8 @@ where = ["src"]
 # --- pytest config
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "slow: tests that are slow / Monte-Carlo / long-running",
+]
 addopts = "-q"
 python_files = ["test_*.py"]
