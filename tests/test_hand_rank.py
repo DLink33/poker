@@ -85,29 +85,115 @@ def _assert_category_within_tolerance(name: str, obs: int, n: int, z: float) -> 
     )
 
 
+def _format_distribution(counts: dict[str, int], n: int) -> str:
+    rows = []
+    for name, count in counts.items():
+        pct = (count / n) * 100.0
+        exp_pct = EXPECTED_P[name] * 100.0
+        rows.append((name, count, pct, exp_pct))
+
+    # Sort by observed % descending
+    rows.sort(key=lambda r: r[2], reverse=True)
+
+    name_w = max(len(r[0]) for r in rows)
+    lines = [
+        f"{'hand type':<{name_w}}  {'obs %':>10}  {'exp %':>10}  {'obs':>10}  {'exp':>10}",
+        f"{'-' * name_w}  {'-' * 10}  {'-' * 10}  {'-' * 10}  {'-' * 10}",
+    ]
+    for name, obs, obs_pct, exp_pct in rows:
+        exp = n * (exp_pct / 100.0)
+        lines.append(
+            f"{name:<{name_w}}  {obs_pct:10.4f}  {exp_pct:10.4f}  {obs:10d}  {exp:10.1f}"
+        )
+    return "\n".join(lines)
+
+
 @pytest.mark.slow
 def test_hand_distribution_matches_5card_theory() -> None:
-    """
-    Monte-Carlo validation: with enough samples, your random dealing + ranking logic
-    should match the known 5-card draw distribution.
-
-    Override sample size if desired:
-      HAND_DIST_N=500000 pytest -k distribution
-    """
     n = int(os.getenv("HAND_DIST_N", "300000"))
     seed = int(os.getenv("HAND_DIST_SEED", "12345"))
-
-    # Bigger z => less flaky. 6-sigma is generous.
     z = float(os.getenv("HAND_DIST_Z", "6.0"))
+
+    # 0 = never print, 1 = print on fail, 2 = always print
+    print_mode = int(os.getenv("HAND_DIST_PRINT", "1"))
 
     counts = _simulate_counts(n=n, seed=seed)
 
-    # Basic sanity check
-    assert sum(counts.values()) == n
+    if print_mode == 2:
+        print("\n" + _format_distribution(counts, n))
 
-    # Ensure naming matches what we expect (catches typos / missing categories)
+    assert sum(counts.values()) == n
     assert set(counts.keys()) == set(EXPECTED_P.keys())
 
-    # Check each category count
-    for name, obs in counts.items():
-        _assert_category_within_tolerance(name, obs, n=n, z=z)
+    try:
+        for name, obs in counts.items():
+            _assert_category_within_tolerance(name, obs, n=n, z=z)
+    except AssertionError:
+        if print_mode >= 1:
+            print("\n=== HAND DISTRIBUTION (observed vs expected) ===")
+            print(f"n={n}, seed={seed}, z={z}")
+            print(_format_distribution(counts, n))
+        raise
+
+
+def test_hand_rank_straight_flush() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_straight_flush())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 8  # straight flush
+
+
+def test_hand_rank_four_of_a_kind() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_four_of_a_kind())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 7  # four of a kind
+
+
+def test_hand_rank_full_house() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_full_house())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 6  # full house
+
+
+def test_hand_rank_flush() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_flush())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 5  # flush
+
+
+def test_hand_rank_straight() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_straight())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 4  # straight
+
+
+def test_hand_rank_three_of_a_kind() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_three_of_a_kind())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 3  # three of a kind
+
+
+def test_hand_rank_two_pair() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_two_pair())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 2  # two pair
+
+
+def test_hand_rank_one_pair() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_one_pair())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 1  # one pair
+
+
+def test_hand_rank_high_card() -> None:
+    hand = TestUtils.make_hand(TestUtils.gen_random_high_card())
+    player = Player("Tester", hand=hand)
+    rank1 = Logic.calc_hand_rank(player)
+    assert rank1[0] == 0  # high card
