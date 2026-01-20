@@ -1,6 +1,7 @@
 import math
 import os
 import random
+from collections import Counter
 
 import pytest
 from utils import TestUtils
@@ -38,11 +39,13 @@ EXPECTED_P = {
     "high card": 1_302_540 / 2_598_960,
 }
 
+
 # Fixture for a random hand
 @pytest.fixture
 def random_hand() -> Hand:
     cards: list[str] = TestUtils.gen_random_hand()
     return TestUtils.make_hand(cards)
+
 
 # Fixtures for specific hand types
 @pytest.fixture
@@ -51,11 +54,13 @@ def player_with_straight_flush() -> Player:
     hand: Hand = TestUtils.make_hand(cards)
     return Player("StraightFlushPlayer", hand=hand)
 
+
 @pytest.fixture
 def player_with_four_of_a_kind() -> Player:
     cards: list[str] = ["9H", "9D", "9S", "9C", "2D"]
     hand: Hand = TestUtils.make_hand(cards)
     return Player("FourOfAKindPlayer", hand=hand)
+
 
 @pytest.fixture
 def player_with_full_house() -> Player:
@@ -63,11 +68,13 @@ def player_with_full_house() -> Player:
     hand: Hand = TestUtils.make_hand(cards)
     return Player("FullHousePlayer", hand=hand)
 
+
 @pytest.fixture
 def player_with_flush() -> Player:
     cards: list[str] = ["2H", "5H", "7H", "9H", "JH"]
     hand: Hand = TestUtils.make_hand(cards)
     return Player("FlushPlayer", hand=hand)
+
 
 @pytest.fixture
 def player_with_straight() -> Player:
@@ -75,11 +82,13 @@ def player_with_straight() -> Player:
     hand: Hand = TestUtils.make_hand(cards)
     return Player("StraightPlayer", hand=hand)
 
+
 @pytest.fixture
 def player_with_three_of_a_kind() -> Player:
     cards: list[str] = ["4H", "4D", "4S", "9C", "JD"]
     hand: Hand = TestUtils.make_hand(cards)
     return Player("ThreeOfAKindPlayer", hand=hand)
+
 
 @pytest.fixture
 def player_with_two_pair() -> Player:
@@ -87,11 +96,13 @@ def player_with_two_pair() -> Player:
     hand: Hand = TestUtils.make_hand(cards)
     return Player("TwoPairPlayer", hand=hand)
 
+
 @pytest.fixture
 def player_with_one_pair() -> Player:
     cards: list[str] = ["2H", "2D", "5S", "9C", "JD"]
     hand: Hand = TestUtils.make_hand(cards)
     return Player("OnePairPlayer", hand=hand)
+
 
 @pytest.fixture
 def player_with_high_card() -> Player:
@@ -215,24 +226,53 @@ def test_calc_hand_rank_by_category(hand_factory, expected_rank: int) -> None:
     rank: tuple[int, list[int]] = Logic.calc_hand_rank(player)
     assert rank[0] == expected_rank
 
+
 # --- Player Hand Comparison Tests ---
 @pytest.mark.parametrize(
     "player_fixture_1, player_fixture_2, expected_winner_fixture",
     [
-        ("player_with_straight_flush", "player_with_four_of_a_kind", "player_with_straight_flush"),
+        (
+            "player_with_straight_flush",
+            "player_with_four_of_a_kind",
+            "player_with_straight_flush",
+        ),
         ("player_with_full_house", "player_with_flush", "player_with_full_house"),
         ("player_with_straight", "player_with_three_of_a_kind", "player_with_straight"),
         ("player_with_two_pair", "player_with_one_pair", "player_with_two_pair"),
         ("player_with_high_card", "player_with_one_pair", "player_with_one_pair"),
-        ("player_with_flush", "player_with_straight_flush", "player_with_straight_flush"),
-        ("player_with_four_of_a_kind", "player_with_full_house", "player_with_four_of_a_kind"),
-        ("player_with_three_of_a_kind", "player_with_two_pair", "player_with_three_of_a_kind"),
+        (
+            "player_with_flush",
+            "player_with_straight_flush",
+            "player_with_straight_flush",
+        ),
+        (
+            "player_with_four_of_a_kind",
+            "player_with_full_house",
+            "player_with_four_of_a_kind",
+        ),
+        (
+            "player_with_three_of_a_kind",
+            "player_with_two_pair",
+            "player_with_three_of_a_kind",
+        ),
         ("player_with_one_pair", "player_with_high_card", "player_with_one_pair"),
         ("player_with_straight", "player_with_flush", "player_with_flush"),
-        ("player_with_full_house", "player_with_straight_flush", "player_with_straight_flush"),
-        ("player_with_four_of_a_kind", "player_with_straight_flush", "player_with_straight_flush"),
+        (
+            "player_with_full_house",
+            "player_with_straight_flush",
+            "player_with_straight_flush",
+        ),
+        (
+            "player_with_four_of_a_kind",
+            "player_with_straight_flush",
+            "player_with_straight_flush",
+        ),
         ("player_with_high_card", "player_with_two_pair", "player_with_two_pair"),
-        ("player_with_straight_flush", "player_with_two_pair", "player_with_straight_flush"),
+        (
+            "player_with_straight_flush",
+            "player_with_two_pair",
+            "player_with_straight_flush",
+        ),
     ],
     ids=[
         "straight flush beats four of a kind",
@@ -251,10 +291,70 @@ def test_calc_hand_rank_by_category(hand_factory, expected_rank: int) -> None:
         "straight flush beats two pair",
     ],
 )
-def test_poker_hand_comparisons(request, player_fixture_1, player_fixture_2, expected_winner_fixture):
+def test_poker_hand_winners(
+    request, player_fixture_1, player_fixture_2, expected_winner_fixture
+):
     player1: Player = request.getfixturevalue(player_fixture_1)
     player2: Player = request.getfixturevalue(player_fixture_2)
     expected_winner: Player = request.getfixturevalue(expected_winner_fixture)
 
-    winner: Player = Logic.poker([player1, player2])
+    winner: Player = Logic.poker([player1, player2])[0]  # assumes no ties for this test
     assert winner == expected_winner
+
+
+@pytest.mark.parametrize(
+    "player_fixture_list, expected_winner_fixture_list",
+    [
+        (
+            ["player_with_straight_flush", "player_with_straight_flush"],
+            ["player_with_straight_flush", "player_with_straight_flush"],
+        ),
+        (
+            [
+                "player_with_four_of_a_kind",
+                "player_with_four_of_a_kind",
+                "player_with_high_card",
+                "player_with_one_pair",
+                "player_with_two_pair",
+                "player_with_three_of_a_kind",
+            ],
+            ["player_with_four_of_a_kind", "player_with_four_of_a_kind"],
+        ),
+        (
+            [
+                "player_with_straight_flush",
+                "player_with_four_of_a_kind",
+                "player_with_full_house",
+            ],
+            ["player_with_straight_flush"],
+        ),
+        (
+            [
+                "player_with_straight_flush",
+                "player_with_straight_flush",
+                "player_with_four_of_a_kind",
+                "player_with_full_house",
+                "player_with_flush",
+                "player_with_straight",
+                "player_with_three_of_a_kind",
+                "player_with_two_pair",
+                "player_with_one_pair",
+                "player_with_high_card",
+            ],
+            ["player_with_straight_flush", "player_with_straight_flush"],
+        ),
+    ],
+    ids=[
+        "tie: straight flush vs straight flush",
+        "tie: 2 four of a kinds vs others",
+        "no tie: straight flush beats others",
+        "tie: 2 straight flushes vs others",
+    ],
+)
+def test_poker_hand_ties(request, player_fixture_list, expected_winner_fixture_list):
+    players = [request.getfixturevalue(n) for n in player_fixture_list]
+    expected = [request.getfixturevalue(n) for n in expected_winner_fixture_list]
+
+    winners = Logic.poker(players)
+
+    assert Counter(p.name for p in winners) == Counter(p.name for p in expected)
