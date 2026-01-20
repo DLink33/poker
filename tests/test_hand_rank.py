@@ -291,20 +291,41 @@ def test_calc_hand_rank_by_category(hand_factory, expected_rank: int) -> None:
         "straight flush beats two pair",
     ],
 )
-def test_poker_hand_winners(
+def test_poker_hands_head_to_head(
     request, player_fixture_1, player_fixture_2, expected_winner_fixture
 ):
     player1: Player = request.getfixturevalue(player_fixture_1)
     player2: Player = request.getfixturevalue(player_fixture_2)
     expected_winner: Player = request.getfixturevalue(expected_winner_fixture)
 
-    winner: Player = Logic.poker([player1, player2])[0]  # assumes no ties for this test
+    winner: Player = Logic.poker([player1, player2])[
+        0
+    ]  # assumes no ties for this test (one winner)
     assert winner == expected_winner
 
 
 @pytest.mark.parametrize(
     "player_fixture_list, expected_winner_fixture_list",
     [
+        (
+            [
+                "player_with_straight_flush",
+                "player_with_full_house",
+                "player_with_flush",
+                "player_with_straight",
+                "player_with_three_of_a_kind",
+                "player_with_two_pair",
+                "player_with_one_pair",
+                "player_with_high_card",
+                "player_with_high_card",
+                "player_with_high_card",
+                "player_with_high_card",
+                "player_with_high_card",
+                "player_with_high_card",
+                "player_with_straight_flush",
+            ],
+            ["player_with_straight_flush", "player_with_straight_flush"],
+        ),
         (
             ["player_with_straight_flush", "player_with_straight_flush"],
             ["player_with_straight_flush", "player_with_straight_flush"],
@@ -343,15 +364,57 @@ def test_poker_hand_winners(
             ],
             ["player_with_straight_flush", "player_with_straight_flush"],
         ),
+        (
+            [
+                "player_with_two_pair",
+                "player_with_two_pair",
+                "player_with_one_pair",
+                "player_with_one_pair",
+                "player_with_high_card",
+            ],
+            [
+                "player_with_two_pair",
+                "player_with_two_pair",
+            ],
+        ),
+        (
+            [
+                "player_with_one_pair",
+                "player_with_high_card",
+                "player_with_high_card",
+                "player_with_high_card",
+            ],
+            [
+                "player_with_one_pair",
+            ],
+        ),
+        (
+            [
+                "player_with_three_of_a_kind",
+                "player_with_three_of_a_kind",
+                "player_with_three_of_a_kind",
+            ],
+            [
+                "player_with_three_of_a_kind",
+                "player_with_three_of_a_kind",
+                "player_with_three_of_a_kind",
+            ],
+        ),
     ],
     ids=[
-        "tie: straight flush vs straight flush",
-        "tie: 2 four of a kinds vs others",
-        "no tie: straight flush beats others",
-        "tie: 2 straight flushes vs others",
+        "2 straight flushes vs others",
+        "straight flush vs straight flush",
+        "2 four of a kinds vs others",
+        "straight flush beats others",
+        "2 straight flushes vs others",
+        "2 two pairs vs others",
+        "one pair vs high cards",
+        "3 way tie with three of a kinds",
     ],
 )
-def test_poker_hand_ties(request, player_fixture_list, expected_winner_fixture_list):
+def test_multiple_poker_hands(
+    request, player_fixture_list, expected_winner_fixture_list
+):
     players = [request.getfixturevalue(n) for n in player_fixture_list]
     expected = [request.getfixturevalue(n) for n in expected_winner_fixture_list]
 
