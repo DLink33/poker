@@ -7,8 +7,9 @@ from .entities import Player
 
 class Logic:
     @staticmethod
-    def get_card_counts(cards:list[Card]):
+    def get_card_counts(cards: list[Card]):
         return Counter(card.type.rank for card in cards)
+
     @staticmethod
     def is_flush(hand: Hand) -> bool:
         cards: list[Card] = hand.getCards()
@@ -95,15 +96,31 @@ class Logic:
             or Logic.is_flush(hand)
         )
 
+    @staticmethod
+    def allmax(iterable, key=None) -> list:
+        max_items, max_value = [], None
+        key = key or (lambda x: x)
+        for item in iterable:
+            value = key(item)
+            if not max_items or value > max_value:
+                max_value = value
+                max_items = [item]
+            elif value == max_value:
+                max_items.append(item)
+        return max_items
+
     @classmethod
-    def poker(cls, players:list[Player]) -> Player:
-        return max(players, key=cls.calc_hand_rank)
+    def poker(cls, players: list[Player]) -> list[Player]:
+        """
+        Returns a list of winning players from a list of players based on their hand ranks.
+        """
+        return cls.allmax(players, key=cls.calc_hand_rank)
 
     @classmethod
     def calc_hand_rank(cls, player) -> tuple:
         def order_by_rank_freq(ranks: list[int], lo2hi: bool = False):
             rank_counts: Counter = Counter(ranks)
-            return sorted(  
+            return sorted(
                 ranks,
                 key=lambda x: (-rank_counts[x], -x)
                 if not lo2hi
@@ -121,7 +138,8 @@ class Logic:
         cards: list[Card] = sorted(hand.getCards(), reverse=True)
         # get the ranks of the sorted cards (order preserved: highest to lowest rank)
         ranks: list[int] = [card.type.rank.value for card in cards]
-        if ranks == [14,5,4,3,2]: ranks = [5,4,3,2,1]
+        if ranks == [14, 5, 4, 3, 2]:
+            ranks = [5, 4, 3, 2, 1]
         # it is useful to also have the ranks ordered by frequency (hence the helper)
         ranks_by_freq: list[int] = order_by_rank_freq(ranks, lo2hi=False)
         hand_rank: list
@@ -243,7 +261,7 @@ def main():
     print("\n" + str(hand))
     print(rules.calc_hand_rank(player))
 
-    print('//////////////////////////////////////')
+    print("//////////////////////////////////////")
     players = [player1, player, player2]
     for player in players:
         print(player)
