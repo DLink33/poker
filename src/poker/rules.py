@@ -7,6 +7,9 @@ from .entities import Player
 
 class Logic:
     @staticmethod
+    def get_card_counts(cards:list[Card]):
+        return Counter(card.type.rank for card in cards)
+    @staticmethod
     def is_flush(hand: Hand) -> bool:
         cards: list[Card] = hand.getCards()
         if cards == []:
@@ -41,7 +44,7 @@ class Logic:
         if not cards:
             return False
 
-        counts = Counter(card.type.rank for card in cards)
+        counts = Logic.get_card_counts(cards)
         return 4 in counts.values()
 
     @staticmethod
@@ -50,7 +53,7 @@ class Logic:
         if not cards:
             return False
 
-        counts = Counter(card.type.rank for card in cards)
+        counts = Logic.get_card_counts(cards)
         return sorted(counts.values()) == [2, 3]
 
     @staticmethod
@@ -58,7 +61,7 @@ class Logic:
         cards: list[Card] = hand.getCards()
         if not cards:
             return False
-        counts = Counter(card.type.rank for card in cards)
+        counts = Logic.get_card_counts(cards)
         return 3 in counts.values() and not Logic.is_full_house(hand)
 
     @staticmethod
@@ -66,7 +69,7 @@ class Logic:
         cards: list[Card] = hand.getCards()
         if not cards:
             return False
-        counts = Counter(card.type.rank for card in cards)
+        counts = Logic.get_card_counts(cards)
         pair_counts = list(count for count in counts.values() if count == 2)
         return len(pair_counts) == 2
 
@@ -76,7 +79,7 @@ class Logic:
         if len(cards) != 5:
             return False
 
-        counts = Counter(card.type.rank for card in cards).values()
+        counts = Logic.get_card_counts(cards).values()
         return sorted(counts) == [1, 1, 1, 2]
 
     @staticmethod
@@ -93,14 +96,14 @@ class Logic:
         )
 
     @classmethod
-    def poker(cls, players) -> Player:
+    def poker(cls, players:list[Player]) -> Player:
         return max(players, key=cls.calc_hand_rank)
 
     @classmethod
     def calc_hand_rank(cls, player) -> tuple:
         def order_by_rank_freq(ranks: list[int], lo2hi: bool = False):
             rank_counts: Counter = Counter(ranks)
-            return sorted(
+            return sorted(  
                 ranks,
                 key=lambda x: (-rank_counts[x], -x)
                 if not lo2hi
@@ -114,12 +117,13 @@ class Logic:
         if len(player.hand) < 5:
             return (0, 0, 0)
 
-        # get the player's cards and sort them
+        # get the player's cards and sort them highest to lowest
         cards: list[Card] = sorted(hand.getCards(), reverse=True)
-        # get the ranks of the sorted cards (order preserved)
+        # get the ranks of the sorted cards (order preserved: highest to lowest rank)
         ranks: list[int] = [card.type.rank.value for card in cards]
+        if ranks == [14,5,4,3,2]: ranks = [5,4,3,2,1]
         # it is useful to also have the ranks ordered by frequency (hence the helper)
-        ranks_by_freq: list[int] = order_by_rank_freq(ranks)
+        ranks_by_freq: list[int] = order_by_rank_freq(ranks, lo2hi=False)
         hand_rank: list
 
         # DEBUG
@@ -129,9 +133,6 @@ class Logic:
         ### Straight Flush ###
         if cls.is_flush(hand) and cls.is_straight(hand):
             hand_rank = [8, ranks[0]]
-            # check for ace hi/lo
-            if ranks == [14, 5, 4, 3, 2]:
-                hand_rank[1] = 5
             return tuple(hand_rank)
         elif cls.is_four_of_kind(hand):
             hand_rank = [7, ranks_by_freq[0], ranks_by_freq[-1]]
@@ -165,6 +166,18 @@ def main():
 
     # Straight Flush
     hand: Hand = Hand.from_str("tc 9c 8c 7c 6c")
+    player1: Player = Player("Test Name", hand)
+    print(player1)
+    print(rules.calc_hand_rank(player1))
+
+    # Straight-flush ace-five low
+    hand: Hand = Hand.from_str("as 2s 3s 4s 5s")
+    player2: Player = Player("Test Name", hand)
+    print(player2)
+    print(rules.calc_hand_rank(player2))
+
+    # Straight ace-five low
+    hand: Hand = Hand.from_str("as 2s 3c 4s 5s")
     player: Player = Player("Test Name", hand)
     print(player)
     print(rules.calc_hand_rank(player))
@@ -229,6 +242,13 @@ def main():
     player.hand = hand
     print("\n" + str(hand))
     print(rules.calc_hand_rank(player))
+
+    print('//////////////////////////////////////')
+    players = [player1, player, player2]
+    for player in players:
+        print(player)
+        print(Logic.calc_hand_rank(player))
+    print(Logic.poker(players))
 
 
 if __name__ == "__main__":
