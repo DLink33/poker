@@ -6,28 +6,31 @@ from typing import Self
 from .cards import Card, Ranks, Suits
 
 
-class CardCollection():
-    '''
+class CardCollection:
+    """
     Represents a set of cards (ordered with index-type lookups)
-    '''
+    """
+
     @classmethod
-    def from_str(cls, cards_str:str) -> Self:
+    def from_str(cls, cards_str: str) -> Self:
         card_list: list[Card] = []
-        cards: list[str] = re.split(r'[;,\s]+', cards_str)
+        cards: list[str] = re.split(r"[;,\s]+", cards_str)
         for card_str in cards:
             card_list.append(Card.from_str(card_str))
         return cls(card_list)
-    
+
     @classmethod
-    def from_str_list(cls, cards:list[str]) -> Self:
+    def from_str_list(cls, cards: list[str]) -> Self:
         card_list: list[Card] = []
         for card_str in cards:
             card_list.append(Card.from_str(card_str))
         return cls(card_list)
 
-    def __init__(self, cards:list[Card] | None = None):
-        self._cards:list[Card] = []  # represents order
-        self._index:dict[tuple[Suits, Ranks], list[Card]] = defaultdict(list)   # fast look up
+    def __init__(self, cards: list[Card] | None = None):
+        self._cards: list[Card] = []  # represents order
+        self._index: dict[tuple[Suits, Ranks], list[Card]] = defaultdict(
+            list
+        )  # fast look up
         if cards:
             for card in cards:
                 self.add_card(card)
@@ -40,7 +43,7 @@ class CardCollection():
 
     def __str__(self) -> str:
         return "\n".join(str(card) for card in self._cards)
-    
+
     def add_card(self, card: Card, position: int | None = None) -> None:
         """
         Adds a SINGLE card to the collection.
@@ -50,9 +53,9 @@ class CardCollection():
             self._cards.append(card)
         else:
             self._cards.insert(position, card)
-        
+
         # can track more than one card of the same rank and suit with a list:
-        self._index[(card.type.suit, card.type.rank)].append(card) 
+        self._index[(card.type.suit, card.type.rank)].append(card)
 
     def remove_card(self, card: Card) -> None:
         """
@@ -61,7 +64,7 @@ class CardCollection():
         self._cards.remove(card)
         bucket = self._index[(card.type.suit, card.type.rank)]
         bucket.remove(card)
-        if not bucket: # if there are no more cards of this type in the collection, delete dict entry
+        if not bucket:  # if there are no more cards of this type in the collection, delete dict entry
             del self._index[(card.type.suit, card.type.rank)]
 
     # ---- lookup by type ----
@@ -88,12 +91,34 @@ class CardCollection():
         if not bucket:
             return None
 
-        card = bucket.pop()          # pick one
+        card = bucket.pop()  # pick one
         if not bucket:
             del self._index[(suit, rank)]
 
         self._cards.remove(card)
         return card
+
+    def pop_card(self, position: int = 0) -> Card | None:
+        if not self._cards:
+            return None
+        card = self._cards.pop(position)
+        bucket = self._index[(card.type.suit, card.type.rank)]
+        bucket.remove(card)
+        if not bucket:
+            del self._index[(card.type.suit, card.type.rank)]
+        return card
+
+    def transfer_cards(self, target: "CardCollection", num_cards: int = 1) -> None:
+        """
+        Transfer num_cards from this collection to the target collection.
+        Cards are taken from the top (end) of this collection.
+        Default is 1 card.
+        """
+        for _ in range(num_cards):
+            card = self.pop_card(position=len(self._cards) - 1)
+            if card is not None:
+                target.add_card(card)
+
 
 class Deck(CardCollection):
     """
@@ -108,59 +133,47 @@ class Deck(CardCollection):
             _cards (list[Card]): The internal list of Card objects in the deck.
             _index (dict): Index mapping card types to their instances for fast lookup.
     """
+
     def __init__(self):
-        cards:list[Card] = [
-            Card(suit, rank)
-            for suit in Suits
-            for rank in Ranks
-        ]
+        cards: list[Card] = [Card(suit, rank) for suit in Suits for rank in Ranks]
         super().__init__(cards)
 
-    
     # ---- deck/stack-style helpers ----
-    
+
     def _draw(self, top=True) -> Card | None:
         if not self._cards:
             return None
-        
-        card:Card | None = self._cards.pop() if top else self._cards.pop(0)
+        if top:
+            return self.pop_card(position=len(self._cards) - 1)
+        else:
+            return self.pop_card(position=0)
 
-        if card is None:
-            return None
-        
-        bucket = self._index[(card.type.suit, card.type.rank)]
-        bucket.remove(card)
-        if not bucket:
-            del self._index[(card.type.suit, card.type.rank)]
-        
-        return card
-
-        
     def draw_top(self) -> Card | None:
         """
         Pop from the end (top) of the collection.
         """
-        self._draw(top=True)
+        return self._draw(top=True)
 
     def draw_bottom(self) -> Card | None:
         """
         Pop from the beginning (bottom) of the collection.
         """
-        self._draw(top=False)
-    
+        return self._draw(top=False)
+
     def shuffle(self) -> None:
         shuffle(self._cards)
 
+
 class Hand(CardCollection):
-    def __init__(self, cards:list[Card]):
+    def __init__(self, cards: list[Card]):
         super().__init__(cards=cards)
-        
+
     def getCards(self):
         return self._cards
-    
+
     def getMinCard(self):
         return min(self.getCards())
-    
+
     def getMaxCard(self):
         return min(self.getCards())
 
@@ -170,15 +183,31 @@ class Pile(CardCollection):
         super().__init__()
         raise NotImplementedError
 
+
 class DiscardPile(Pile):
     def __init__(self):
         super().__init__()
         raise NotImplementedError
 
-# Main for smoke testing purposes   
+
+# Main for smoke testing purposes
 def main():
-    hand:Hand = Hand.from_str('AD KD QD JD, TD 9D, 8D; 7D 6D; 5D 4D, 3D 2D')
+    hand: Hand = Hand.from_str("AD KD QD JD, TD 9D, 8D; 7D 6D; 5D 4D, 3D 2D")
     print(hand)
 
-if __name__ == '__main__':
+    deck: Deck = Deck()
+    print("\n\nInitial deck:")
+    print(deck)
+    deck.shuffle()
+    print("\n\nShuffled deck:")
+    print(deck)
+
+    # test drawing cards
+    print("\n\nDrawing top 5 cards:")
+    for _ in range(5):
+        print(deck.draw_top())
+    assert len(deck) == 47
+
+
+if __name__ == "__main__":
     main()
