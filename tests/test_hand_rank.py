@@ -5,19 +5,7 @@ from utils import TestUtils
 
 from poker.card_collections import Hand
 from poker.entities import Player
-from poker.rules import Logic
-
-HAND_RANKINGS = {
-    0: "high card",
-    1: "one pair",
-    2: "two pair",
-    3: "three of a kind",
-    4: "straight",
-    5: "flush",
-    6: "full house",
-    7: "four of a kind",
-    8: "straight flush",
-}
+from poker.rules import HAND_RANKINGS, Logic
 
 
 # Fixture for a random hand

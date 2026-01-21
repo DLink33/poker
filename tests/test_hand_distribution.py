@@ -6,19 +6,7 @@ import pytest
 from utils import TestUtils
 
 from poker.entities import Player
-from poker.rules import Logic
-
-HAND_RANKINGS = {
-    0: "high card",
-    1: "one pair",
-    2: "two pair",
-    3: "three of a kind",
-    4: "straight",
-    5: "flush",
-    6: "full house",
-    7: "four of a kind",
-    8: "straight flush",
-}
+from poker.rules import HAND_RANKINGS, Logic
 
 # Theoretical 5-card poker hand probabilities (single 5-card draw).
 # Total distinct 5-card hands = 2,598,960.
